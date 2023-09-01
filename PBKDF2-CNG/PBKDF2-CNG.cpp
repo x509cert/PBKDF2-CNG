@@ -16,12 +16,14 @@ _Must_inspect_result_ NTSTATUS GenerateSalt(
     NTSTATUS status = STATUS_UNSUCCESSFUL;
 
     // Open an algorithm handle for the RNG algorithm
-    if (!NT_SUCCESS(status = BCryptOpenAlgorithmProvider(
+    status = BCryptOpenAlgorithmProvider(
         &hAlgorithm,
         BCRYPT_RNG_ALGORITHM,
         NULL,
         0
-    )))
+    );
+    
+    if (!NT_SUCCESS(status))
     {
         wprintf(L"Failed to open algorithm provider for RNG. Status: 0x%x\n", status);
         goto Cleanup;
