@@ -8,7 +8,7 @@
 #define NT_SUCCESS(Status)          (((NTSTATUS)(Status)) >= 0)
 #define STATUS_UNSUCCESSFUL         ((NTSTATUS)0xC0000001L)
 
-NTSTATUS GenerateSalt(
+_Must_inspect_result_ NTSTATUS GenerateSalt(
     _Out_writes_bytes_all_(cbSalt) PUCHAR salt, 
     _In_ ULONG cbSalt)
 {
@@ -46,8 +46,7 @@ Cleanup:
     return status;
 }
 
-
-NTSTATUS DeriveKeyUsingPBKDF2(
+_Must_inspect_result_ NTSTATUS DeriveKeyUsingPBKDF2(
     _In_                                ULONG   iteration,
     _In_z_                              LPCWSTR password,
     _In_reads_bytes_(cbSalt)            PUCHAR  salt,
