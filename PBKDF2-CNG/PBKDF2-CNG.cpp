@@ -1,6 +1,5 @@
 #include <windows.h>
 #include <bcrypt.h>
-#include <stdio.h>
 #include <chrono>
 
 #pragma comment(lib, "Bcrypt.lib")
@@ -8,16 +7,17 @@
 #define NT_SUCCESS(Status)          (((NTSTATUS)(Status)) >= 0)
 #define STATUS_UNSUCCESSFUL         ((NTSTATUS)0xC0000001L)
 
-_Must_inspect_result_ NTSTATUS GenerateSalt(
+_Must_inspect_result_ 
+NTSTATUS GenerateSalt(
     _Out_writes_bytes_all_(cbSalt) PUCHAR salt, 
     _In_ ULONG cbSalt)
 {
-    BCRYPT_ALG_HANDLE hAlgorithm = NULL;
+    BCRYPT_ALG_HANDLE hSaltAlg = NULL;
     NTSTATUS status = STATUS_UNSUCCESSFUL;
 
     // Open an algorithm handle for the RNG algorithm
     status = BCryptOpenAlgorithmProvider(
-        &hAlgorithm,
+        &hSaltAlg,
         BCRYPT_RNG_ALGORITHM,
         NULL,
         0
@@ -31,7 +31,7 @@ _Must_inspect_result_ NTSTATUS GenerateSalt(
 
     // Generate the salt
     status = BCryptGenRandom(
-        hAlgorithm,
+        hSaltAlg,
         salt,
         cbSalt,
         0
@@ -43,12 +43,13 @@ _Must_inspect_result_ NTSTATUS GenerateSalt(
     }
 
 Cleanup:
-    if (hAlgorithm) BCryptCloseAlgorithmProvider(hAlgorithm, 0);
+    if (hSaltAlg) BCryptCloseAlgorithmProvider(hSaltAlg, 0);
 
     return status;
 }
 
-_Must_inspect_result_ NTSTATUS DeriveKeyUsingPBKDF2(
+_Must_inspect_result_ 
+NTSTATUS DeriveKeyUsingPBKDF2(
     _In_                                ULONG   iteration,
     _In_z_                              LPCWSTR password,
     _In_reads_bytes_(cbSalt)            PUCHAR  salt,
@@ -58,7 +59,6 @@ _Must_inspect_result_ NTSTATUS DeriveKeyUsingPBKDF2(
 )
 {
     BCRYPT_ALG_HANDLE hHashAlg = NULL;
-    BCRYPT_KEY_HANDLE hKey = NULL;
     NTSTATUS status = STATUS_UNSUCCESSFUL;
 
     // Open an algorithm handle for the PBKDF2 algorithm
@@ -92,7 +92,6 @@ _Must_inspect_result_ NTSTATUS DeriveKeyUsingPBKDF2(
     }
 
 Cleanup:
-    if (hKey) BCryptDestroyKey(hKey);
     if (hHashAlg) BCryptCloseAlgorithmProvider(hHashAlg, 0);
 
     return status;
@@ -114,7 +113,7 @@ int main()
     {
         if (NT_SUCCESS(DeriveKeyUsingPBKDF2(100000, password, salt, sizeof(salt), derivedKey, sizeof(derivedKey))))
         {
-            wprintf(L"First byte of derived key: %02x\n", derivedKey[0]);
+            wprintf(L"First byte of derived key: 0x%02x\n", derivedKey[0]);
         }
     }
 
